@@ -12,3 +12,19 @@ def inside_outside(sequence, T, Q):
     """
 	alpha, beta = None, None
 	return alpha, beta
+
+
+def maximize_labeled_recall(mu):
+    """Given a tensor of marginals, produce the parse sequence
+
+        Args:
+            mu : np.ndarray (N, N, M) - a three-dimensional array of marginals
+        Returns:
+            gamma : np.ndarray(N, N) - an array of grammar symbols, spanning each of the segment, which maximizes the labeled recall metric
+
+
+    """
+    pass
+
+def maximize_greedy(mu):
+    pass
