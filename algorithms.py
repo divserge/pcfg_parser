@@ -5,7 +5,7 @@ def inside_outside(sequence, T, Q):
 
         Args:
             sequence: an iterable containing token indices
-            T: a trilinear function, mapping to vectors into another vector - transition rules for non-terminals of the grammar
+            T: a trilinear function, mapping two vectors into another vector - transition rules for non-terminals of the grammar
             Q: a linear function - transition for terminals of the grammar
         Returns:
             alpha, beta - inside and outside probabilities
