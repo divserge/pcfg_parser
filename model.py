@@ -1,3 +1,4 @@
+from copy import deepcopy
 
 from algorithms import inside_outside
 from tensors import BaseTensor
@@ -9,6 +10,7 @@ class PcfgParser:
 		
 		self.tensor_wrapper = tensor_wrapper
 		
+		self.T_data = deepcopy(rules_nonterminal)
 		self.T = self.tensor_wrapper(rules_nonterminal, [0], [1, 2])
 		self.Q = deepcopy(rules_terminal)
 
