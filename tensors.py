@@ -21,9 +21,6 @@ class BaseTensor:
         self.rank = rank
         self.ktensor = cp_als(dtensor(data),self.rank)[0]
         
-
-
-
     def dot(self, vectors, modes):
         """
         Args:
@@ -152,8 +149,6 @@ class TuckerTensor:
 #     vec2 = ttensor.dot([random_vector,random_vector])
 #     print(np.linalg.norm(vec2-vec))
 # print(time.time()-t)
-
-
 
 # dt = dtensor(random_tensor)
 # t = time.time()
