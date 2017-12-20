@@ -65,20 +65,18 @@ def inside_outside_einsum(sequence, T, Q, pi):
 
     # Inside recursion
     for j in range(0, sequence_len):
-        for i in range(0, j):
-            print(alpha[i, i:j].reshape(j-i, -1).shape)
-            print(alpha[i+1:j+1, j].reshape(j-i, -1).shape)
+        for i in range(0, j)[::-1]:
             alpha[i][j] = np.einsum(
-                'ijk,jl,kl->i',
+                'ijk,lj,lk->i',
                 T,
-                alpha[i, i:j].reshape(j-i, -1),
-                alpha[i+1:j+1, j].reshape(j-i, -1)
+                alpha[i, i:j],
+                alpha[i+1:j+1, j]
             )
 
     # Outside base case, uniform probabilities of each symbol
     beta[0][sequence_len - 1] = pi
     # Outside recursion
-    for j in range(0, sequence_len):
+    for j in range(0, sequence_len)[::-1]:
         for i in range(0, j + 1):
             if (i > 0):
                 beta[i][j] += np.einsum('ijk,li,lj->k', T, beta[:i, j, :], alpha[:i, i-1, :])

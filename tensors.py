@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.io as sio
-from sktensor import dtensor, ktensor, cp_als, tucker
-from sktensor.core import ttm
+#from sktensor import dtensor, ktensor, cp_als, tucker
+#from sktensor.core import ttm
 from copy import deepcopy
 import time
 
@@ -70,6 +70,9 @@ class TuckerTensor:
         return convolution
 
 
+class TensorTrain:
+	def contraction_trace():
+		pass
 # n = 10
 # R = 5
 
