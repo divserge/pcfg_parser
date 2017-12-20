@@ -15,31 +15,28 @@ def inside_outside(sequence, T, Q, pi):
     beta = np.zeros((sequence_len, sequence_len, non_terminals_num))
 
     # Inside base case:
-    for token, i in enumerate(sequence):
+    for i, token in enumerate(sequence):
         alpha[i][i] = Q[:, token]
 
     # Inside recursion
     for j in range(0, sequence_len):
-        for i in range(0, j):
+        for i in range(0, j)[::-1]:
             cur_sum = np.zeros_like(alpha[i][j])
             for k in range(i, j):
-                cur_sum += np.tensordot(np.tensordot(T, alpha[i][k], axes=(1, 0)),
-                                alpha[k+1][j], axes=(1, 0))
-            alpha[i][j] = np.copy(cur_sum)
+                cur_sum += np.einsum('ijk,j,k->i', T, alpha[i][k], alpha[k+1][j])
+            alpha[i][j] += np.copy(cur_sum)
 
     # Outside base case, uniform probabilities of each symbol
     beta[0][sequence_len - 1] = pi
     
     # Outside recursion
-    for j in range(0, sequence_len):
+    for j in range(0, sequence_len)[::-1]:
         for i in range(0, j + 1):
             cur_sum = np.zeros_like(beta[i][j])
             for k in range(0, i):
-                cur_sum += np.tensordot(np.tensordot(T, beta[k][j], axes=(0, 0)),
-                                alpha[k][i-1], axes=(0, 0))
+                cur_sum += np.einsum('ijk,i,j->k', T, beta[k][j], alpha[k][i-1])
             for k in range(j + 1, sequence_len):
-                cur_sum += np.tensordot(np.tensordot(T, beta[i][k], axes=(0, 0)),
-                                alpha[j+1][k], axes=(1, 0))
+                cur_sum += np.einsum('ijk,i,k->j', T, beta[i][k], alpha[j+1][k])    
             beta[i][j] += np.copy(cur_sum)
 
     
@@ -63,13 +60,20 @@ def inside_outside_einsum(sequence, T, Q, pi):
     beta = np.zeros((sequence_len, sequence_len, non_terminals_num))
 
     # Inside base case:
-    for token, i in enumerate(sequence):
+    for i, token in enumerate(sequence):
         alpha[i][i] = Q[:, token]
 
     # Inside recursion
     for j in range(0, sequence_len):
         for i in range(0, j):
-            alpha[i][j] = np.einsum('ijk,jl,lk->i', T, alpha[i, i:j, :], alpha[i+1:j+1, j, :])
+            print(alpha[i, i:j].reshape(j-i, -1).shape)
+            print(alpha[i+1:j+1, j].reshape(j-i, -1).shape)
+            alpha[i][j] = np.einsum(
+                'ijk,jl,kl->i',
+                T,
+                alpha[i, i:j].reshape(j-i, -1),
+                alpha[i+1:j+1, j].reshape(j-i, -1)
+            )
 
     # Outside base case, uniform probabilities of each symbol
     beta[0][sequence_len - 1] = pi
@@ -84,5 +88,24 @@ def inside_outside_einsum(sequence, T, Q, pi):
     return alpha, beta
 
 
-def parse_sequence_greedy(mu):
-    pass
+def maximize_labeled_recall(mu):
+    
+    gamma = np.zeros((mu.shape[0], mu.shape[1]), dtype=float)
+    gamma_splits = np.zeros((mu.shape[0], mu.shape[1]), dtype=int)
+    gamma_indices = np.zeros((mu.shape[0], mu.shape[1]), dtype=int)
+    
+    for i in range(gamma.shape[0]):
+        gamma_indices[i, i] = np.argmax(mu[i, i])
+        gamma[i, i] = mu[i, i, gamma_indices[i, i]]
+
+    for j in range(mu.shape[1]):
+        for i in range(j)[::-1]:
+            
+            split_vals = gamma[i, i:j] + gamma[i+1:j+1, j]
+            split = np.argmax(split_vals)
+
+            gamma_splits[i, j] = split
+            gamma_indices[i, j] = np.argmax(mu[i, j])
+            gamma[i, j] = split_vals[split] + mu[i, j, gamma_indices[i, j]]
+
+    return gamma_splits, gamma_indices

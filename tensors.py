@@ -4,7 +4,7 @@ class BaseTensor:
 	"""
 	A base class for multilinear function
 	"""
-	def __init__(self, data, up_indices, down_indices):
+	def __init__(self, data):
 		"""
 	    Args:
 	        data: np.ndarray : the underlying multi-dimensional array
@@ -13,7 +13,7 @@ class BaseTensor:
 	    Returns:
 	        BaseTensor object
 	    """
-		pass
+		return data
 		
 	def dot(self, vectors):
 		"""

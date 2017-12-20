@@ -1,18 +1,22 @@
+import numpy as np
+
 from copy import deepcopy
 
-from algorithms import inside_outside
+from algorithms import inside_outside, maximize_labeled_recall
 from tensors import BaseTensor
 
 
 class PcfgParser:
 	
-	def __init__(self, rules_nonterminal, rules_terminal, tensor_wrapper=BaseTensor):
+	def __init__(self, rules_nonterminal, rules_terminal, root_distribution, tensor_wrapper=BaseTensor):
 		
 		self.tensor_wrapper = tensor_wrapper
 		
 		self.T_data = deepcopy(rules_nonterminal)
-		self.T = self.tensor_wrapper(rules_nonterminal, [0], [1, 2])
+		self.T = self.T_data
+
 		self.Q = deepcopy(rules_terminal)
+		self.pi = deepcopy(root_distribution)
 
 		self.T_temp = np.zeros_like(rules_nonterminal)
 		self.Q_temp = np.zeros_like(rules_terminal)
@@ -31,8 +35,10 @@ class PcfgParser:
 
 	def parse_tree(self, seq):
 
-		alpha, beta = inside_outside(self.__transform_text([seq])[0], self.T, self.Q)
+		alpha, beta = inside_outside(seq, self.T, self.Q, self.pi)
 		mu = alpha * beta
+
+		return maximize_labeled_recall(mu)
 
 
 	def collect_statistics(self, seq, alpha, beta):
@@ -61,7 +67,7 @@ class PcfgParser:
 		self.T_data = self.T_temp / (self.T_temp.sum(axis = [1, 2])[:, np.newaxis, np.newaxis] + self.Q_temp.sum(axis = 1)[:, np,newaxis, np.newaxis])
 		self.Q = self.Q_temp / (self.Q_temp.sum(axis = 1)[:, np.newaxis] + self.T_temp.sum(axis = [1, 2])[:, np.newaxis])
 
-		self.T = self.tensor_wrapper(self.T_data, [0], [1, 2])
+		self.T = self.T_data
 
 		self.T_temp = np.zeros_like(self.T_temp)
 		self.Q_temp = np.zeros_like(self.Q_temp)
