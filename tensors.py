@@ -47,7 +47,7 @@ class Canonical:
         """
         self.rank = rank
         self.shape = data.shape
-        self.ktensor = cp_als(dtensor(data),self.rank)[0]
+        self.ktensor = cp_als(dtensor(data),(self.rank,)*3)[0]
         
     def dot(self, vectors, modes):
         """
@@ -60,7 +60,7 @@ class Canonical:
         factors = deepcopy(self.ktensor.U)
         # print(self.ktensor.lmbda)
         for ind,i in zip(modes,range(len(modes))):
-            factors[ind] = (vectors[i].T).dot(factors[ind]).reshape((1,self.rank))
+            factors[ind] = (vectors[i].T).dot(factors[ind]).reshape((1,(self.rank,) * 3))
         convolution = ktensor(factors,self.ktensor.lmbda).toarray().squeeze()
         return convolution
 
@@ -93,7 +93,7 @@ class TuckerTensor:
         factors = deepcopy(self.factors)
         # print(self.ktensor.lmbda)
         for ind,i in zip(modes,range(len(modes))):
-            factors[ind] = (vectors[i].T).dot(factors[ind]).reshape((1,self.rank[ind]))
+            factors[ind] = (vectors[i].T).dot(factors[ind]).reshape((1,((self.rank,) * 3)[ind]))
         convolution = ttm(self.core,factors).squeeze()
         return convolution
 
