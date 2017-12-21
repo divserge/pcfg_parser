@@ -4,11 +4,10 @@ from model import PcfgParser
 
 class Parser:
 	
-	def __init__(self, rules, roots, train=False, approximation='exact'):
+	def __init__(self, rules, roots, train=False, approximation='exact', rank=None):
 
 		self.__encode_rules(rules, roots)
-		self.__parser = PcfgParser(self.T, self.Q, self.pi, approximation)
-		self.T = self.__parser.T
+		self.parser = PcfgParser(self.T, self.Q, self.pi, approximation, rank)
 
 		if train:
 			pass
@@ -16,7 +15,7 @@ class Parser:
 	def parse(self, sentence):
 		
 		sequence = [self.term_to_index[w] for w in sentence.split()]
-		splits, syms = self.__parser.parse_tree(sequence)
+		splits, syms = self.parser.parse_tree(sequence)
 
 		return self.__split_string(sentence.split(), 0, len(sentence.split()) - 1, splits, syms)
 

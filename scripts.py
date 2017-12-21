@@ -1,6 +1,3 @@
-
-
-
 def parse_grammars(path):
 	grammars = {}
 	root_syms = {}
@@ -25,8 +22,4 @@ def parse_grammars(path):
 				grammars[fr].append((to, prob))
 
 	return grammars, root_syms
-
-
-
-
-
+	

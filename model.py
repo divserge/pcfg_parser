@@ -2,22 +2,25 @@ import numpy as np
 
 from copy import deepcopy
 
-from algorithms import inside_outside, maximize_labeled_recall
-from tensors import BaseTensor, TuckerTensor
+from algorithms import inside_outside_functor, inside_outside_tt, maximize_labeled_recall
+from tensors import BaseTensor, TuckerTensor, TensorTrain, Canonical
 
 approximations = {
-	'exact' : None,
+	'exact' : BaseTensor,
 	'tucker' : TuckerTensor,
+	'canonical' : Canonical,
+	'tt' : TensorTrain,
 }
 
 class PcfgParser:
 	
-	def __init__(self, rules_nonterminal, rules_terminal, root_distribution, approximation):
+	def __init__(self, rules_nonterminal, rules_terminal, root_distribution, approximation, rank):
 		
+		self.approximation = approximation
 		self.tensor_wrapper = approximations[approximation]
 		
 		self.T_data = deepcopy(rules_nonterminal)
-		self.T = self.T_data if approximation == 'exact' else self.tensor_wrapper(self.T_data)
+		self.T = self.tensor_wrapper(self.T_data, rank=rank)
 
 		self.Q = deepcopy(rules_terminal)
 		self.pi = deepcopy(root_distribution)
@@ -31,7 +34,8 @@ class PcfgParser:
 			
 			for seq in sequences:
 				
-				alpha, beta = inside_outside(seq, self.T, self.Q)
+				alpha, beta = inside_outside_functor(seq, self.T, self.Q) if approximation != 'tt' else \
+							  inside_outside_tt(seq, self.T, self.Q, self.pi)
 				self.collect_statistics(seq, alpha, beta)
 			
 			self.recompute_parameters()
@@ -39,7 +43,8 @@ class PcfgParser:
 
 	def parse_tree(self, seq):
 
-		alpha, beta = inside_outside(seq, self.T, self.Q, self.pi)
+		alpha, beta = inside_outside_functor(seq, self.T, self.Q, self.pi) if self.approximation != 'tt' else \
+					  inside_outside_tt(seq, self.T, self.Q, self.pi)
 		mu = alpha * beta
 
 		return maximize_labeled_recall(mu)
@@ -71,7 +76,7 @@ class PcfgParser:
 		self.T_data = self.T_temp / (self.T_temp.sum(axis = [1, 2])[:, np.newaxis, np.newaxis] + self.Q_temp.sum(axis = 1)[:, np,newaxis, np.newaxis])
 		self.Q = self.Q_temp / (self.Q_temp.sum(axis = 1)[:, np.newaxis] + self.T_temp.sum(axis = [1, 2])[:, np.newaxis])
 
-		self.T = self.T_data
+		self.T = self.tensor_wrapper(self.T_data)
 
 		self.T_temp = np.zeros_like(self.T_temp)
 		self.Q_temp = np.zeros_like(self.Q_temp)

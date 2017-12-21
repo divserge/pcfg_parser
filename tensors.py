@@ -2,16 +2,42 @@ import numpy as np
 import scipy.io as sio
 from sktensor import dtensor, ktensor, cp_als, tucker
 from sktensor.core import ttm
+from tt import tensor
 from copy import deepcopy
 import time
 
+class BaseTensor:
+	"""
+    A base class for multilinear function
+    """
+	
+	def __init__(self, data, rank = None):
+		"""
+        Args:
+            data: np.ndarray : the underlying multi-dimensional array
+            rank: 
+        Returns:
+            BaseTensor object
+        """
+		self.data = data
+		self.shape = data.shape
+
+	def dot(self, vectors, modes):
+		"""
+        Args:
+            vectors: list of two np.ndarrat vectors - the vectors to map
+            modes: list of two integers - modes to contract
+        Returns:
+            np.ndarray - the result of the mapping
+        """
+		return np.einsum(self.data, [0, 1, 2], vectors[0], [modes[0]], vectors[1], [modes[1]])
 
 
 class Canonical:
     """
     A base class for multilinear function
     """
-    def __init__(self, data, rank = 2):
+    def __init__(self, data, rank = 8):
         """
         Args:
             data: np.ndarray : the underlying multi-dimensional array
@@ -20,6 +46,7 @@ class Canonical:
             BaseTensor object
         """
         self.rank = rank
+        self.shape = data.shape
         self.ktensor = cp_als(dtensor(data),self.rank)[0]
         
     def dot(self, vectors, modes):
@@ -41,7 +68,7 @@ class TuckerTensor:
     """
     A base class for multilinear function
     """
-    def __init__(self, data, rank=(2,2,2)):
+    def __init__(self, data, rank=2):
         """
         Args:
             data: np.ndarray : the underlying multi-dimensional array
@@ -51,7 +78,7 @@ class TuckerTensor:
         """
         self.rank = rank
         self.shape = data.shape
-        self.core, self.factors = tucker.hooi(dtensor(data),self.rank,maxIter=20)
+        self.core, self.factors = tucker.hooi(dtensor(data),(self.rank,) * 3,maxIter=20)
         
 
 
@@ -70,15 +97,10 @@ class TuckerTensor:
         convolution = ttm(self.core,factors).squeeze()
         return convolution
 
+def TensorTrain(data, rank=6):
+	return tensor.to_list(tensor(data, rmax=rank))
 
-class TensorTrain:
-	
-	def __init__(self, data, rank=(2,2,2))
 
-		self.rank = rank
-		self.shape = data.shape
-		self.
-		pass
 # n = 10
 # R = 5
 
