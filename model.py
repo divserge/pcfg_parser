@@ -3,17 +3,21 @@ import numpy as np
 from copy import deepcopy
 
 from algorithms import inside_outside, maximize_labeled_recall
-from tensors import BaseTensor
+from tensors import BaseTensor, TuckerTensor
 
+approximations = {
+	'exact' : None,
+	'tucker' : TuckerTensor,
+}
 
 class PcfgParser:
 	
-	def __init__(self, rules_nonterminal, rules_terminal, root_distribution, tensor_wrapper=BaseTensor):
+	def __init__(self, rules_nonterminal, rules_terminal, root_distribution, approximation):
 		
-		self.tensor_wrapper = tensor_wrapper
+		self.tensor_wrapper = approximations[approximation]
 		
 		self.T_data = deepcopy(rules_nonterminal)
-		self.T = self.T_data
+		self.T = self.T_data if approximation == 'exact' else self.tensor_wrapper(self.T_data)
 
 		self.Q = deepcopy(rules_terminal)
 		self.pi = deepcopy(root_distribution)

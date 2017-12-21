@@ -1,13 +1,13 @@
 import numpy as np
 import scipy.io as sio
-#from sktensor import dtensor, ktensor, cp_als, tucker
-#from sktensor.core import ttm
+from sktensor import dtensor, ktensor, cp_als, tucker
+from sktensor.core import ttm
 from copy import deepcopy
 import time
 
 
 
-class BaseTensor:
+class Canonical:
     """
     A base class for multilinear function
     """
@@ -50,6 +50,7 @@ class TuckerTensor:
             BaseTensor object
         """
         self.rank = rank
+        self.shape = data.shape
         self.core, self.factors = tucker.hooi(dtensor(data),self.rank,maxIter=20)
         
 
@@ -71,7 +72,12 @@ class TuckerTensor:
 
 
 class TensorTrain:
-	def contraction_trace():
+	
+	def __init__(self, data, rank=(2,2,2))
+
+		self.rank = rank
+		self.shape = data.shape
+		self.
 		pass
 # n = 10
 # R = 5

@@ -4,15 +4,14 @@ from model import PcfgParser
 
 class Parser:
 	
-	def __init__(self, config):
+	def __init__(self, rules, roots, train=False, approximation='exact'):
 
-		if config['rules'] is not None:
-			self.__encode_rules(config['rules'])
+		self.__encode_rules(rules, roots)
+		self.__parser = PcfgParser(self.T, self.Q, self.pi, approximation)
+		self.T = self.__parser.T
 
-		self.__parser = PcfgParser(self.T, self.Q, self.pi)
-
-		#if config['training'] is not None:
-		#	pass
+		if train:
+			pass
 
 	def parse(self, sentence):
 		
@@ -25,7 +24,7 @@ class Parser:
 	def __encode_vocabulary(self, vocab, n_nonterm):
 		pass
 
-	def __encode_rules(self, rules):
+	def __encode_rules(self, rules, root_probs):
 
 		self.nonterm_to_index = {}
 		self.index_to_nonterm = []
@@ -57,7 +56,8 @@ class Parser:
 		
 		# distribution over the root terminal
 		self.pi = np.zeros(self.Q.shape[0], dtype=float)
-		self.pi[self.nonterm_to_index['S']] = 1.0
+		for root_sym in root_probs:
+			self.pi[self.nonterm_to_index[root_sym]] = root_probs[root_sym]
 
 		for (index, start_symbol) in enumerate(rules):
 

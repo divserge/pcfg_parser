@@ -64,7 +64,7 @@ def inside_outside_einsum(sequence, T, Q, pi):
         alpha[i][i] = Q[:, token]
 
     # Inside recursion
-    for j in range(0, sequence_len):
+    for j in range(0, sequence_len)[::-1]:
         for i in range(0, j)[::-1]:
             alpha[i][j] = np.einsum(
                 'ijk,lj,lk->i',
@@ -83,6 +83,48 @@ def inside_outside_einsum(sequence, T, Q, pi):
             if (j < sequence_len - 1):
                 beta[i][j] += np.einsum('ijk,li,lk->j', T, beta[i, j+1:sequence_len, :], alpha[j+1, j+1:sequence_len, :])
 
+    return alpha, beta
+
+
+def inside_outside_functor(sequence, T, Q, pi):
+    """Inside-outside algorithm for PCFG to compute the marginals
+        Args:
+            sequence: an iterable containing token indices
+            T: a trilinear function, mapping two vectors into another vector - transition rules for non-terminals of the grammar
+            Q: a linear function - transition for terminals of the grammar
+        Returns:
+            alpha, beta - inside and outside probabilities
+    """
+    non_terminals_num, terminals_num, sequence_len = T.shape[0], Q.shape[1], len(sequence)
+    alpha = np.zeros((sequence_len, sequence_len, non_terminals_num))
+    beta = np.zeros((sequence_len, sequence_len, non_terminals_num))
+
+    # Inside base case:
+    for i, token in enumerate(sequence):
+        alpha[i][i] = Q[:, token]
+
+    # Inside recursion
+    for j in range(0, sequence_len):
+        for i in range(0, j)[::-1]:
+            cur_sum = np.zeros_like(alpha[i][j])
+            for k in range(i, j):
+                cur_sum += T.dot([alpha[i][k], alpha[k+1][j]], [1, 2])
+            alpha[i][j] += np.copy(cur_sum)
+
+    # Outside base case, uniform probabilities of each symbol
+    beta[0][sequence_len - 1] = pi
+    
+    # Outside recursion
+    for j in range(0, sequence_len)[::-1]:
+        for i in range(0, j + 1):
+            cur_sum = np.zeros_like(beta[i][j])
+            for k in range(0, i):
+                cur_sum += T.dot([beta[k][j], alpha[k][i-1]], [0, 1]) # np.einsum('ijk,i,j->k', T, beta[k][j], alpha[k][i-1])
+            for k in range(j + 1, sequence_len):
+                cur_sum += T.dot([beta[i][k], alpha[j+1][k]], [0, 2]) # np.einsum('ijk,i,k->j', T, beta[i][k], alpha[j+1][k])    
+            beta[i][j] += np.copy(cur_sum)
+
+    
     return alpha, beta
 
 
