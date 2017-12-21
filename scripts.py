@@ -53,6 +53,7 @@ def test_parser(approximation, rules_path, rank, input_file, output_folder):
     rules, root = parse_grammars(path=rules_path)
     p = Parser(rules, root, approximation=approximation, rank=rank)
     writeout_parses(
+    	p,
         input_file,
         '{}/test_{}_{}.txt'.format(output_folder, approximation, rank)
     )
